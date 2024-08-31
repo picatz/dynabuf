@@ -19,12 +19,11 @@ Dynabuf uses [`protojson`] as a logical intermediate between Protocol Buffers
 and DynamoDB attribute maps. This allows for a [standard conversion] between 
 the two data formats, so you can easily store Protocol Buffer defined objects
 in DynamoDB without sacrificing the ability to query them. No manual
-field mapping, [`protoc`] plugin, or custom serialization required.
+field mapping or [`protoc`] plugins required.
 
 > [!IMPORTANT]
 >
-> This library is designed to be used with the [AWS SDK for Go] (v2), and is not
-> intended to be a general purpose Protocol Buffers to DynamoDB library.
+> This library is designed to be used with the [AWS SDK for Go] (v2).
 
 [`protojson`]: https://pkg.go.dev/google.golang.org/protobuf/encoding/protojson
 [`protoc`]: https://protobuf.dev/reference/other/#plugins
