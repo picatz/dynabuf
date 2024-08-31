@@ -45,7 +45,7 @@ import (
 //	}
 type Error string
 
-// Implement the [error] interface.
+// Error implements the [error] interface.
 //
 // [error]: https://pkg.go.dev/builtin#error
 func (e Error) Error() string { return "dynabuf: " + string(e) }
