@@ -80,12 +80,12 @@ user := &example.User{
 
 item, _ := dynabuf.Marshal(user)
 
-b.dynamoClient.PutItem(ctx, &dynamodb.PutItemInput{
+dynamoClient.PutItem(ctx, &dynamodb.PutItemInput{
 	TableName: tableName,
 	Item:      item,
 })
 
-output, _ := b.dynamoClient.GetItem(ctx, &dynamodb.GetItemInput{
+output, _ := dynamoClient.GetItem(ctx, &dynamodb.GetItemInput{
 	TableName: tableName,
 	Key: map[string]types.AttributeValue{
 		"id": &types.AttributeValueMemberS{Value: user.Id},
