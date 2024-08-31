@@ -47,7 +47,7 @@ type Error string
 
 // Implement the [error] interface.
 //
-// [error interface]: https://pkg.go.dev/builtin#error
+// [error]: https://pkg.go.dev/builtin#error
 func (e Error) Error() string { return "dynabuf: " + string(e) }
 
 // Set of error messages that can be returned by the Marshal and Unmarshal functions.
