@@ -321,16 +321,3 @@ func unmarshalJSONToProtoSlice(data []byte, v any) error {
 
 	return nil
 }
-
-// Updates translates the given DynamoDB attribute value map to an update map.
-// This is useful when updating an item in a DynamoDB table.
-func Updates(mav map[string]types.AttributeValue) map[string]types.AttributeValueUpdate {
-	updates := make(map[string]types.AttributeValueUpdate, len(mav))
-	for k, v := range mav {
-		updates[k] = types.AttributeValueUpdate{
-			Value:  v,
-			Action: types.AttributeActionPut,
-		}
-	}
-	return updates
-}
