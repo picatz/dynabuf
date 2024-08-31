@@ -138,13 +138,13 @@ func marshalProtoMessage(v any) (map[string]types.AttributeValue, error) {
 		return nil, fmt.Errorf("%w: %w", ErrFailedToMarshal, err)
 	}
 
-	var bm map[string]any
-	err = json.Unmarshal(b, &bm)
+	var intermediary map[string]any
+	err = json.Unmarshal(b, &intermediary)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w: %w", ErrFailedToMarshal, ErrFailedToUnmarshalIntermediary, err)
 	}
 
-	av, err := attributevalue.MarshalMap(bm)
+	av, err := attributevalue.MarshalMap(intermediary)
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrFailedToMarshal, err)
 	}
@@ -285,15 +285,15 @@ func Unmarshal(av any, v any) error {
 		return fmt.Errorf("%w: %w: unsupported type: %T", ErrFailedToUnmarshal, ErrInvalidOutput, v)
 	}
 
-	jsonBytes, err := json.Marshal(intermediateValue)
+	intermediateBytes, err := json.Marshal(intermediateValue)
 	if err != nil {
 		return fmt.Errorf("%w: %w: %w", ErrFailedToUnmarshal, ErrFailedToMarshalIntermediary, err)
 	}
 
 	if isSlice {
-		err = unmarshalJSONToProtoSlice(jsonBytes, v)
+		err = unmarshalJSONToProtoSlice(intermediateBytes, v)
 	} else {
-		err = protojson.Unmarshal(jsonBytes, v.(proto.Message))
+		err = protojson.Unmarshal(intermediateBytes, v.(proto.Message))
 	}
 	if err != nil {
 		return fmt.Errorf("%w: %w: %w", ErrFailedToUnmarshal, ErrFailedToUnmarshalIntermediary, err)
