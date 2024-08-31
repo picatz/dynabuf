@@ -2,7 +2,6 @@ package dynabuf_test
 
 import (
 	"testing"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/picatz/dynabuf"
@@ -10,93 +9,7 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-// TestMarshalUnmarshalStruct tests the [github.com/picatz/dynabuf.Marshal] and
-// [github.com/picatz/dynabuf.Unmarshal] functions with a struct from the
-// [google.golang.org/protobuf/types/known/structpb] package.
-//
-// This is a common, protobuf defined struct that is used in many Go projects.
-// It primarily allows us to avoid generating our own Go structs for this test.
-func TestMarshalUnmarshalStruct(t *testing.T) {
-	input := &structpb.Struct{
-		Fields: map[string]*structpb.Value{
-			"bar": {
-				Kind: &structpb.Value_StringValue{
-					StringValue: "hello world",
-				},
-			},
-			"createdAt": {
-				Kind: &structpb.Value_StringValue{
-					StringValue: time.Now().Format(time.RFC3339),
-				},
-			},
-		},
-	}
-
-	outputAny, err := dynabuf.Marshal(input)
-	must.NoError(t, err)
-
-	output, ok := outputAny.(map[string]types.AttributeValue)
-	must.True(t, ok)
-	must.Eq(t, 2, len(output))
-	must.MapContainsKeys(t, output, []string{"bar", "createdAt"})
-	must.Eq(t, input.Fields["bar"].GetStringValue(), output["bar"].(*types.AttributeValueMemberS).Value)
-	must.Eq(t, input.Fields["createdAt"].GetStringValue(), output["createdAt"].(*types.AttributeValueMemberS).Value)
-
-	out := &structpb.Struct{}
-	err = dynabuf.Unmarshal(output, out)
-	must.NoError(t, err)
-}
-
-// TestMarshalUnmarshalStructList tests the [github.com/picatz/dynabuf.Marshal] and
-// [github.com/picatz/dynabuf.Unmarshal] functions with a list of [struct] values.
-//
-// Essentially  the same as [TestMarshalUnmarshalStruct] but with a list of structs
-// instead of just a single struct.
-//
-// [struct]: https://pkg.go.dev/google.golang.org/protobuf/types/known/structpb#Struct
-func TestMarshalUnmarshalStructList(t *testing.T) {
-	input := []*structpb.Struct{
-		{
-			Fields: map[string]*structpb.Value{
-				"foo": {
-					Kind: &structpb.Value_StringValue{
-						StringValue: "hello world",
-					},
-				},
-			},
-		},
-		{
-			Fields: map[string]*structpb.Value{
-				"bar": {
-					Kind: &structpb.Value_StringValue{
-						StringValue: "hello moon",
-					},
-				},
-			},
-		},
-	}
-
-	avs := []map[string]types.AttributeValue{}
-
-	for _, foo := range input {
-		avInf, err := dynabuf.Marshal(foo)
-		must.NoError(t, err)
-
-		av, ok := avInf.(map[string]types.AttributeValue)
-		must.True(t, ok)
-		avs = append(avs, av)
-	}
-
-	output := []*structpb.Struct{}
-	err := dynabuf.Unmarshal(avs, &output)
-	must.NoError(t, err)
-	must.Eq(t, 2, len(output))
-	must.Eq(t, input[0].Fields["foo"].GetStringValue(), output[0].Fields["foo"].GetStringValue())
-	must.Eq(t, input[1].Fields["bar"].GetStringValue(), output[1].Fields["bar"].GetStringValue())
-}
-
-// TestMarshal tests the [github.com/picatz/dynabuf.Marshal] and
-// [github.com/picatz/dynabuf.Unmarshal] functions with a struct from the
+// TestMarshal tests the Marshal function with a struct from the
 // [google.golang.org/protobuf/types/known/structpb] package.
 //
 // This is a common, protobuf defined struct that is used in many Go projects.
@@ -264,11 +177,10 @@ func TestUnmarshal(t *testing.T) {
 	}
 }
 
-// TestRoudtrip tests the [github.com/picatz/dynabuf.Marshal] and
-// [github.com/picatz/dynabuf.Unmarshal] functions with a struct from the
+// TestRoudtrip tests the Marshal and Unmarshal functions with a struct from the
 // [google.golang.org/protobuf/types/known/structpb] package in a roundtrip
-// fashion, such that the output of the [Marshal] function is passed to the
-// [Unmarshal] function and the original input values are compared to the
+// fashion, such that the output of the Marshal function is passed to the
+// Unmarshal function and the original input values are compared to the
 // output values.
 func TestRoudtrip(t *testing.T) {
 	tests := []struct {
