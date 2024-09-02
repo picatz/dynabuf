@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package dynabuf;
+
+// import "buf/validate/validate.proto";
+// import "google/protobuf/struct.proto";
+import "google/protobuf/descriptor.proto";
+
+option go_package = "github.com/picatz/dynabuf/internal;dynabuf";
+
+extend google.protobuf.MessageOptions {
+  repeated Table table = 9001;
+}
+
+extend google.protobuf.FieldOptions {
+  optional Field field = 9001;
+}
+
+// Field options for dynabuf fields in protobuf messages.
+message Field {
+  // Mark the field as a partition key.
+  optional bool partition_key = 1;
+
+  // Mark the field as a sort key.
+  optional bool sort_key = 2;
+}
+
+message Table {
+  // The billing mode of the table, which determines how you are
+  // charged for read and write throughput and how you manage capacity.
+  enum BillingMode {
+    BILLING_MODE_UNSPECIFIED = 0;
+    BILLING_MODE_PAY_PER_REQUEST = 1;
+    BILLING_MODE_PROVISIONED = 2;
+  }
+
+  // The name of the table.
+  string name = 1;
+
+  // The billing mode of the table.
+  optional BillingMode billing_mode = 2;
+}
