@@ -1,0 +1,22 @@
+version: v1
+managed:
+  enabled: true
+  go_package_prefix:
+    default: github.com/picatz/dynabuf
+    except:
+      - buf.build/googleapis/googleapis
+      - buf.build/bufbuild/protovalidate
+plugins:
+  - plugin: buf.build/protocolbuffers/go:v1.31.0
+    out: ./internal
+    opt:
+      - module=github.com/picatz/dynabuf
+  - plugin: buf.build/bufbuild/validate-go:v1.0.2
+    out: ./internal
+    opt:
+      - module=github.com/picatz/dynabuf
+  - plugin: protoc-gen-go-dynabuf
+    out: ./internal
+    path: ["go", "run", "./cmd/protoc-gen-go-dynabuf"]
+    opt:
+      - module=github.com/picatz/dynabuf

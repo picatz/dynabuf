@@ -104,3 +104,52 @@ fmt.Println(outputProto)
 > messages or a slice of messages. This is particularly useful when working
 > with batch operations in DynamoDB, where you may need to convert multiple
 > attribute maps at once, without the extra loop logic.
+
+## `protoc` Plugin
+
+Dynabuf also includes an **optional** `protoc` plugin that can be used to 
+generate common Go code for working with Protocol Buffers and DynamoDB.
+
+```proto
+import "dynabuf.proto";
+
+option go_package = "example";
+
+message Example {
+  option (dynabuf.table) = {
+    name: "storage",
+    billing_mode: BILLING_MODE_PAY_PER_REQUEST
+  };
+  string room = 1 [(dynabuf.field).partition_key = true];
+  string drawer = 2 [(dynabuf.field).sort_key = true];
+}
+```
+
+Generates the following:
+
+```go
+var TableName_storage = aws.String("storage")
+
+func CreateTable_storage(ctx context.Context, dynamoClient *dynamodb.Client) error {
+	_, err := dynamoClient.CreateTable(
+		ctx,
+		&dynamodb.CreateTableInput{
+			TableName: TableName_storage,
+			AttributeDefinitions: ...,
+			BillingMode: types.BillingModePayPerRequest,
+		},
+	)
+	return err
+}
+
+func (m *Example) PrimaryKey() map[string]types.AttributeValue {
+	return map[string]types.AttributeValue{
+		"room":   &types.AttributeValueMemberS{Value: m.Room},
+		"drawer": &types.AttributeValueMemberS{Value: m.Drawer},
+	}
+}
+
+func (m *Example) KeyCondition() expression.KeyConditionBuilder {
+	return expression.Key("room").Equal(expression.Value(m.Room)).And(expression.Key("drawer").Equal(expression.Value(m.Drawer)))
+}
+```

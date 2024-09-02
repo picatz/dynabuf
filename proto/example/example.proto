@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package example;
+
+import "dynabuf.proto";
+
+option go_package = "github.com/picatz/dynabuf/internal/example;example";
+
+message Example {
+  option (dynabuf.table) = {
+    name: "storage",
+    billing_mode: BILLING_MODE_PAY_PER_REQUEST
+  };
+  string room = 1 [(dynabuf.field).partition_key = true];
+  string drawer = 2 [(dynabuf.field).sort_key = true];
+}
