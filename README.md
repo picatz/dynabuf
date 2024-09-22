@@ -30,6 +30,57 @@ field mapping or [`protoc`] plugins required.
 [standard conversion]: https://protobuf.dev/programming-guides/proto3/#json
 [AWS SDK for Go]: https://aws.amazon.com/sdk-for-go/
 
+
+```mermaid
+sequenceDiagram
+	participant Client
+	participant Server
+	participant DynamoDB
+
+    Note over Client,Server: Add Widget
+	Client ->> Server: RPC  (protobuf)
+	Server ->> Server: Marshal Protobuf Message to Attribute Map
+	Server ->> DynamoDB: Put Item
+	DynamoDB -->> Server: Put Item Response
+	Server -->> Client: RPC Response (protobuf)
+    Note over Client,Server: Get Widget
+    Client ->> Server: RPC (protobuf)
+	Server ->> DynamoDB: Get Item
+	DynamoDB -->> Server: Get Item Response
+    Server ->> Server: Unmarshal  Attribute Map to Protobuf Message
+	Server -->> Client: RPC Response (protobuf)
+```
+
+```mermaid
+flowchart TD
+    Start[Marshal] --> CheckSlice{Is value a slice?}
+    CheckSlice -- Yes --> CallMarshalProtoSlice[marshalProtoSlice]
+    CheckSlice -- No --> CallMarshalProtoMessage[marshalProtoMessage]
+    CallMarshalProtoMessage --> ReturnAV[Attribute Value or Error]
+    CallMarshalProtoSlice --> ReturnAV[Attribute Value or Error]
+```
+
+```mermaid
+flowchart TD
+    A[marshalProtoMessage] --> B{Is value a proto.Message?}
+    B -- No --> E[Error: Invalid Input]
+    B -- Yes --> C[Marshal value to JSON using protojson.Marshal]
+    C --> D[Unmarshal JSON to map using encoding/json]
+    D --> F[Marshal Map to DynamoDB attribute value using attributevalue.MarshalMap]
+    F --> G[Attribute Value]
+```
+
+```mermaid
+flowchart TD
+    A[marshalProtoSlice] --> B{Is value a slice of proto.Message?}
+    B -- No --> G[Error: Invalid Input]
+    B -- Yes --> C[Initialize result slice]
+    C --> D[For each item in value slice]
+    D --> |Call with item| E[marshalProtoMessage]
+    E --> |Append to result slice| D
+    D -->|After all items processed| H[Return result slice]
+```
+
 ## Usage
 
 You define a Protocol Buffer message, generate the corresponding Go struct,
