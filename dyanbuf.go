@@ -2,6 +2,7 @@ package dynabuf
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
 
@@ -11,64 +12,25 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-// Error represents a dynabuf error message that can be used
-// for robust error handling when marshaling and unmarshaling
-// between protobuf messages and DynamoDB attribute values.
-//
-// # Example
-//
-//	import (
-//	  "fmt"
-//	  "errors"
-//
-//	  "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
-//	  "github.com/picatz/dynabuf"
-//	)
-//
-//	av := map[string]types.AttributeValue{
-//	  "bar": &types.AttributeValueMemberS{
-//	    Value: "hello world",
-//	  },
-//	}
-//
-//	var output structpb.Struct
-//	err := dynabuf.Unmarshal(av, &output)
-//	if err != nil {
-//	  switch {
-//	  case errors.Is(err, dynabuf.ErrFailedToUnmarshal):
-//	    fmt.Println(err)
-//	  case errors.Is(err, dynabuf.ErrFailedToUnmarshalIntermediary):
-//	    fmt.Println(err)
-//	  default:
-//	    fmt.Println("unknown error:", err)
-//	  }
-//	}
-type Error string
-
-// Error implements the [error] interface.
-//
-// [error]: https://pkg.go.dev/builtin#error
-func (e Error) Error() string { return "dynabuf: " + string(e) }
-
-// Set of error messages that can be returned by the Marshal and Unmarshal functions.
+// Set of error messages that can be returned by the [Marshal] and [Unmarshal] functions.
 var (
 	// ErrFailedToMarshal is returned when the function fails to marshal a protobuf message to a DynamoDB attribute value.
-	ErrFailedToMarshal = Error("failed to marshal protobuf to DynamoDB attribute value")
+	ErrFailedToMarshal = errors.New("dynabuf: failed to marshal protobuf to DynamoDB attribute value")
 
 	// ErrFailedToMarshalIntermediary is returned when the function fails to marshal the intermediary map to JSON.
-	ErrFailedToMarshalIntermediary = Error("failed to marshal intermediary map to JSON")
+	ErrFailedToMarshalIntermediary = errors.New("dynabuf: failed to marshal intermediary map to JSON")
 
 	// ErrFailedToUnmarshalIntermediary is returned when the function fails to unmarshal the DynamoDB attribute value to an intermediary map.
-	ErrFailedToUnmarshalIntermediary = Error("failed to unmarshal DynamoDB attribute value to intermediary map")
+	ErrFailedToUnmarshalIntermediary = errors.New("dynabuf: failed to unmarshal DynamoDB attribute value to intermediary map")
 
 	// ErrFailedToUnmarshal is returned when the function fails to unmarshal a DynamoDB attribute value to a protobuf message.
-	ErrFailedToUnmarshal = Error("failed to unmarshal DynamoDB attribute value to protobuf")
+	ErrFailedToUnmarshal = errors.New("dynabuf: failed to unmarshal DynamoDB attribute value to protobuf")
 
 	// ErrInvalidInput is returned when the input is not a protobuf message or slice of messages.
-	ErrInvalidInput = Error("invalid input, must be a protobuf message or slice of messages")
+	ErrInvalidInput = errors.New("dynabuf: invalid input, must be a protobuf message or slice of messages")
 
 	// ErrInvalidOutput is returned when the output is not a pointer to a protobuf message or slice of messages.
-	ErrInvalidOutput = Error("invalid output, must be a pointer to a protobuf message or slice of messages")
+	ErrInvalidOutput = errors.New("dynabuf: invalid output, must be a pointer to a protobuf message or slice of messages")
 )
 
 // Marshal returns the [DynamoDB] attribute value encoding of the given
