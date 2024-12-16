@@ -1,13 +1,84 @@
 package dynabuf_test
 
 import (
+	"fmt"
 	"testing"
 
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	dbtypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/picatz/dynabuf"
 	"github.com/shoenig/test/must"
 	"google.golang.org/protobuf/types/known/structpb"
 )
+
+func ExampleMarshal() {
+	userOrder := &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			"user":   structpb.NewStringValue("user#123"),
+			"order":  structpb.NewStringValue("order#123"),
+			"status": structpb.NewStringValue("pending"),
+			"tags": structpb.NewListValue(&structpb.ListValue{
+				Values: []*structpb.Value{
+					structpb.NewStringValue("tag-1"),
+				},
+			}),
+		},
+	}
+
+	item, err := dynabuf.Marshal(userOrder)
+	if err != nil {
+		panic(err)
+	}
+
+	itemMap := item.(map[string]dbtypes.AttributeValue)
+	fmt.Println(itemMap["user"].(*dbtypes.AttributeValueMemberS).Value)
+	fmt.Println(itemMap["order"].(*dbtypes.AttributeValueMemberS).Value)
+	fmt.Println(itemMap["status"].(*dbtypes.AttributeValueMemberS).Value)
+	fmt.Println(itemMap["tags"].(*dbtypes.AttributeValueMemberL).Value[0])
+
+	// Output:
+	// user#123
+	// order#123
+	// pending
+	// &{tag-1 {}}
+}
+
+func ExampleUnmarshal() {
+	userOrderAV := map[string]dbtypes.AttributeValue{
+		"user": &dbtypes.AttributeValueMemberS{
+			Value: "user#123",
+		},
+		"order": &dbtypes.AttributeValueMemberS{
+			Value: "order#123",
+		},
+		"status": &dbtypes.AttributeValueMemberS{
+			Value: "pending",
+		},
+		"tags": &dbtypes.AttributeValueMemberL{
+			Value: []dbtypes.AttributeValue{
+				&dbtypes.AttributeValueMemberS{
+					Value: "tag-1",
+				},
+			},
+		},
+	}
+
+	userOrderPB := &structpb.Struct{}
+
+	err := dynabuf.Unmarshal(userOrderAV, userOrderPB)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(userOrderPB.Fields["user"].GetStringValue())
+	fmt.Println(userOrderPB.Fields["order"].GetStringValue())
+	fmt.Println(userOrderPB.Fields["status"].GetStringValue())
+	fmt.Println(userOrderPB.Fields["tags"].GetListValue().Values[0].GetStringValue())
+	// Output:
+	// user#123
+	// order#123
+	// pending
+	// tag-1
+}
 
 // TestMarshal tests the Marshal function with a struct from the
 // [google.golang.org/protobuf/types/known/structpb] package.
@@ -37,11 +108,11 @@ func TestMarshal(t *testing.T) {
 				inputStruct, ok := input.(*structpb.Struct)
 				must.True(t, ok)
 
-				outputMap, ok := output.(map[string]types.AttributeValue)
+				outputMap, ok := output.(map[string]dbtypes.AttributeValue)
 				must.True(t, ok)
 				must.Eq(t, len(inputStruct.Fields), len(outputMap))
 				must.MapContainsKeys(t, outputMap, []string{"bar"})
-				must.Eq(t, inputStruct.Fields["bar"].GetStringValue(), outputMap["bar"].(*types.AttributeValueMemberS).Value)
+				must.Eq(t, inputStruct.Fields["bar"].GetStringValue(), outputMap["bar"].(*dbtypes.AttributeValueMemberS).Value)
 			},
 		},
 		{
@@ -72,13 +143,13 @@ func TestMarshal(t *testing.T) {
 				inputList, ok := input.([]*structpb.Struct)
 				must.True(t, ok)
 
-				outputList, ok := output.([]map[string]types.AttributeValue)
+				outputList, ok := output.([]map[string]dbtypes.AttributeValue)
 				must.True(t, ok)
 				must.Eq(t, len(inputList), len(outputList))
 				must.MapContainsKeys(t, outputList[0], []string{"foo"})
 				must.MapContainsKeys(t, outputList[1], []string{"bar"})
-				must.Eq(t, inputList[0].Fields["foo"].GetStringValue(), outputList[0]["foo"].(*types.AttributeValueMemberS).Value)
-				must.Eq(t, inputList[1].Fields["bar"].GetStringValue(), outputList[1]["bar"].(*types.AttributeValueMemberS).Value)
+				must.Eq(t, inputList[0].Fields["foo"].GetStringValue(), outputList[0]["foo"].(*dbtypes.AttributeValueMemberS).Value)
+				must.Eq(t, inputList[1].Fields["bar"].GetStringValue(), outputList[1]["bar"].(*dbtypes.AttributeValueMemberS).Value)
 			},
 		},
 	}
@@ -99,15 +170,15 @@ func TestUnmarshal(t *testing.T) {
 	}{
 		{
 			name: "single struct",
-			input: map[string]types.AttributeValue{
-				"bar": &types.AttributeValueMemberS{
+			input: map[string]dbtypes.AttributeValue{
+				"bar": &dbtypes.AttributeValueMemberS{
 					Value: "hello world",
 				},
 			},
 			check: func(t *testing.T, input, output any, err error) {
 				must.NoError(t, err)
 
-				inputMap, ok := input.(map[string]types.AttributeValue)
+				inputMap, ok := input.(map[string]dbtypes.AttributeValue)
 				must.True(t, ok)
 
 				outputStruct := &structpb.Struct{}
@@ -115,19 +186,19 @@ func TestUnmarshal(t *testing.T) {
 				must.NoError(t, err)
 				must.Eq(t, 1, len(outputStruct.Fields))
 				must.MapContainsKeys(t, outputStruct.Fields, []string{"bar"})
-				must.Eq(t, inputMap["bar"].(*types.AttributeValueMemberS).Value, outputStruct.Fields["bar"].GetStringValue())
+				must.Eq(t, inputMap["bar"].(*dbtypes.AttributeValueMemberS).Value, outputStruct.Fields["bar"].GetStringValue())
 			},
 		},
 		{
 			name: "list of structs",
-			input: []map[string]types.AttributeValue{
+			input: []map[string]dbtypes.AttributeValue{
 				{
-					"foo": &types.AttributeValueMemberS{
+					"foo": &dbtypes.AttributeValueMemberS{
 						Value: "hello world",
 					},
 				},
 				{
-					"bar": &types.AttributeValueMemberS{
+					"bar": &dbtypes.AttributeValueMemberS{
 						Value: "hello moon",
 					},
 				},
@@ -135,7 +206,7 @@ func TestUnmarshal(t *testing.T) {
 			check: func(t *testing.T, input, output any, err error) {
 				must.NoError(t, err)
 
-				inputList, ok := input.([]map[string]types.AttributeValue)
+				inputList, ok := input.([]map[string]dbtypes.AttributeValue)
 				must.True(t, ok)
 
 				outputList := []*structpb.Struct{}
@@ -144,8 +215,8 @@ func TestUnmarshal(t *testing.T) {
 				must.Eq(t, 2, len(outputList))
 				must.MapContainsKeys(t, outputList[0].Fields, []string{"foo"})
 				must.MapContainsKeys(t, outputList[1].Fields, []string{"bar"})
-				must.Eq(t, inputList[0]["foo"].(*types.AttributeValueMemberS).Value, outputList[0].Fields["foo"].GetStringValue())
-				must.Eq(t, inputList[1]["bar"].(*types.AttributeValueMemberS).Value, outputList[1].Fields["bar"].GetStringValue())
+				must.Eq(t, inputList[0]["foo"].(*dbtypes.AttributeValueMemberS).Value, outputList[0].Fields["foo"].GetStringValue())
+				must.Eq(t, inputList[1]["bar"].(*dbtypes.AttributeValueMemberS).Value, outputList[1].Fields["bar"].GetStringValue())
 			},
 		},
 	}
@@ -157,13 +228,13 @@ func TestUnmarshal(t *testing.T) {
 				err error
 			)
 			switch test.input.(type) {
-			case map[string]types.AttributeValue:
+			case map[string]dbtypes.AttributeValue:
 
 				mapOut := &structpb.Struct{}
 				err = dynabuf.Unmarshal(test.input, mapOut)
 
 				out = mapOut
-			case []map[string]types.AttributeValue:
+			case []map[string]dbtypes.AttributeValue:
 				listOut := []*structpb.Struct{}
 				err = dynabuf.Unmarshal(test.input, &listOut)
 
@@ -264,14 +335,14 @@ func TestRoudtrip(t *testing.T) {
 
 			switch test.input.(type) {
 			case *structpb.Struct:
-				outMap, ok := outAny.(map[string]types.AttributeValue)
+				outMap, ok := outAny.(map[string]dbtypes.AttributeValue)
 				must.True(t, ok)
 
 				outStruct := &structpb.Struct{}
 				err = dynabuf.Unmarshal(outMap, outStruct)
 				out = outStruct
 			case []*structpb.Struct:
-				outList, ok := outAny.([]map[string]types.AttributeValue)
+				outList, ok := outAny.([]map[string]dbtypes.AttributeValue)
 				must.True(t, ok)
 
 				outStructList := []*structpb.Struct{}
