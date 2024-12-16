@@ -51,7 +51,7 @@ func ExampleCondition() {
 		panic(err)
 	}
 
-	fmt.Println(dynamoExpr.Condition())
+	fmt.Println(*dynamoExpr.Condition())
 	fmt.Println(dynamoExpr.Names())
 	fmt.Println(len(dynamoExpr.Values()))
 	fmt.Println(dynamoExpr.Values()[":0"])
