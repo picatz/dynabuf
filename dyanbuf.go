@@ -7,7 +7,7 @@ import (
 	"reflect"
 
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
-	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
+	dbtypes "github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 )
@@ -90,7 +90,7 @@ func Marshal(v any) (any, error) {
 // marshalProtoMessage handles marshaling of a single protobuf message
 // to a DynamoDB attribute value. It returns the DynamoDB attribute value
 // map or an error if there are any issues.
-func marshalProtoMessage(v any) (map[string]types.AttributeValue, error) {
+func marshalProtoMessage(v any) (map[string]dbtypes.AttributeValue, error) {
 	if !isProtoMessage(v) {
 		return nil, fmt.Errorf("%w: %w: %T", ErrFailedToMarshal, ErrInvalidInput, v)
 	}
@@ -117,7 +117,7 @@ func marshalProtoMessage(v any) (map[string]types.AttributeValue, error) {
 // marshalProtoSlice handles marshaling of a slice of protobuf messages to
 // a slice of DynamoDB attribute values. It returns the DynamoDB attribute
 // value slice or an error if there are any issues.
-func marshalProtoSlice(v any) ([]map[string]types.AttributeValue, error) {
+func marshalProtoSlice(v any) ([]map[string]dbtypes.AttributeValue, error) {
 	sliceValue := reflect.ValueOf(v)
 	if sliceValue.Kind() != reflect.Slice {
 		return nil, fmt.Errorf("%w: %w: %T", ErrFailedToMarshal, ErrInvalidInput, v)
@@ -127,7 +127,7 @@ func marshalProtoSlice(v any) ([]map[string]types.AttributeValue, error) {
 		return nil, fmt.Errorf("%w: %w: %T", ErrFailedToMarshal, ErrInvalidInput, v)
 	}
 
-	result := make([]map[string]types.AttributeValue, sliceValue.Len())
+	result := make([]map[string]dbtypes.AttributeValue, sliceValue.Len())
 
 	for i := 0; i < sliceValue.Len(); i++ {
 		item := sliceValue.Index(i).Interface()
@@ -171,8 +171,9 @@ func isProtoSlice(v reflect.Value) bool {
 //
 // # DynamoDB Attribute Value to Protocol Buffer Unmarshaling
 //
-// We use a three-step process to unmarshal a DynamoDB [attribute value] to a
-// protobuf message, using [JSON] as the logical intermediary.
+// Similar to marshalling, we use a three-step process to unmarshal a
+// DynamoDB [attribute value] to a protobuf message, using [JSON] as the
+// logical intermediary.
 //
 //  1. The function first unmarshals the DynamoDB attribute value to a map using
 //     the [github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue] package.
@@ -220,19 +221,19 @@ func Unmarshal(av any, v any) error {
 
 	var intermediateValue any
 	switch typedAV := av.(type) {
-	case types.AttributeValue:
+	case dbtypes.AttributeValue:
 		intermediateValue = make(map[string]any)
 		err := attributevalue.Unmarshal(typedAV, &intermediateValue)
 		if err != nil {
 			return fmt.Errorf("%w: failed to unmarshal DynamoDB attribute value: %w", ErrFailedToUnmarshal, err)
 		}
-	case map[string]types.AttributeValue:
+	case map[string]dbtypes.AttributeValue:
 		intermediateValue = make(map[string]any)
 		err := attributevalue.UnmarshalMap(typedAV, &intermediateValue)
 		if err != nil {
 			return fmt.Errorf("%w: failed to unmarshal DynamoDB attribute map: %w", ErrFailedToUnmarshal, err)
 		}
-	case []map[string]types.AttributeValue:
+	case []map[string]dbtypes.AttributeValue:
 		if !isSlice {
 			return fmt.Errorf("%w: %w: %T", ErrFailedToUnmarshal, ErrInvalidOutput, v)
 		}
