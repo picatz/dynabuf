@@ -297,10 +297,37 @@ func TestMessageFieldVariables(t *testing.T) {
 			},
 			check: func(t *testing.T, opts []cel.EnvOption, env *cel.Env) {
 				must.Len(t, 1, opts)
-				ast, issues := env.Parse(`severity == "critical"`)
+
+				_, issues := env.Compile(`severity == "critical"`)
 				must.NoError(t, issues.Err())
-				_, issues = env.Check(ast)
+			},
+		},
+		{
+			name: "structpb message multiple fields",
+			msg: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"severity": structpb.NewStringValue("critical"),
+					"valid":    structpb.NewBoolValue(true),
+					"value":    structpb.NewNumberValue(42),
+				},
+			},
+			check: func(t *testing.T, opts []cel.EnvOption, env *cel.Env) {
+				must.Len(t, 3, opts)
+
+				_, issues := env.Compile(`severity == "critical"`)
 				must.NoError(t, issues.Err())
+
+				_, issues = env.Compile(`valid == true`)
+				must.NoError(t, issues.Err())
+
+				ast, issues := env.Compile(`value == 42.0`)
+				must.NoError(t, issues.Err())
+
+				cond, err := expr.Condition(ast)
+				must.NoError(t, err)
+
+				_, err = expression.NewBuilder().WithCondition(cond).Build()
+				must.NoError(t, err)
 			},
 		},
 		{
@@ -316,9 +343,8 @@ func TestMessageFieldVariables(t *testing.T) {
 			},
 			check: func(t *testing.T, opts []cel.EnvOption, env *cel.Env) {
 				must.Len(t, 1, opts)
-				ast, issues := env.Parse(`attributes.region == "us-east-1"`)
-				must.NoError(t, issues.Err())
-				_, issues = env.Check(ast)
+
+				_, issues := env.Compile(`attributes.region == "us-east-1"`)
 				must.NoError(t, issues.Err())
 			},
 		},
