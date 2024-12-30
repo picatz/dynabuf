@@ -16,6 +16,9 @@ var (
 	marshalOptions = protojson.MarshalOptions{
 		EmitDefaultValues: true,
 	}
+	unmarshalOptions = protojson.UnmarshalOptions{
+		DiscardUnknown: true,
+	}
 )
 
 // Set of error messages that can be returned by the [Marshal] and [Unmarshal] functions.
@@ -262,7 +265,7 @@ func Unmarshal(av any, v any) error {
 	if isSlice {
 		err = unmarshalJSONToProtoSlice(intermediateBytes, v)
 	} else {
-		err = protojson.Unmarshal(intermediateBytes, v.(proto.Message))
+		err = unmarshalOptions.Unmarshal(intermediateBytes, v.(proto.Message))
 	}
 	if err != nil {
 		return fmt.Errorf("%w: %w: %w", ErrFailedToUnmarshal, ErrFailedToUnmarshalIntermediary, err)
@@ -282,7 +285,7 @@ func unmarshalJSONToProtoSlice(data []byte, v any) error {
 	for _, item := range jsonSlice {
 		elemType := slice.Type().Elem()
 		elem := reflect.New(elemType.Elem()).Interface().(proto.Message)
-		if err := protojson.Unmarshal(item, elem); err != nil {
+		if err := unmarshalOptions.Unmarshal(item, elem); err != nil {
 			return err
 		}
 		slice.Set(reflect.Append(slice, reflect.ValueOf(elem)))
