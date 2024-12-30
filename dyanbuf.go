@@ -12,6 +12,12 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
+var (
+	marshalOptions = protojson.MarshalOptions{
+		EmitDefaultValues: true,
+	}
+)
+
 // Set of error messages that can be returned by the [Marshal] and [Unmarshal] functions.
 var (
 	// ErrFailedToMarshal is returned when the function fails to marshal a protobuf message to a DynamoDB attribute value.
@@ -95,7 +101,7 @@ func marshalProtoMessage(v any) (map[string]dbtypes.AttributeValue, error) {
 		return nil, fmt.Errorf("%w: %w: %T", ErrFailedToMarshal, ErrInvalidInput, v)
 	}
 
-	b, err := protojson.Marshal(v.(proto.Message))
+	b, err := marshalOptions.Marshal(v.(proto.Message))
 	if err != nil {
 		return nil, fmt.Errorf("%w: %w", ErrFailedToMarshal, err)
 	}
