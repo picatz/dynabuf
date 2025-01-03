@@ -115,6 +115,14 @@ var dynamoDBFunctions = []cel.EnvOption{
 				return celtypes.NewErr("contains function not implemented")
 			}),
 		),
+		cel.Overload(
+			"contains_string_string",
+			[]*celtypes.Type{celtypes.StringType, celtypes.StringType},
+			celtypes.BoolType,
+			decls.FunctionBinding(func(values ...ref.Val) ref.Val {
+				return celtypes.NewErr("contains function not implemented")
+			}),
+		),
 	),
 }
 
@@ -265,6 +273,10 @@ func (c *converter) conditionFromMacro(expr *exprpb.Expr) (expression.ConditionB
 	switch callExpr.Function {
 	case "has":
 		return expression.AttributeExists(nameBuilder), nil
+	case "startsWith":
+		return expression.BeginsWith(nameBuilder, callExpr.Args[0].GetConstExpr().GetStringValue()), nil
+	case "contains":
+		return expression.Contains(nameBuilder, callExpr.Args[0].GetConstExpr().GetStringValue()), nil
 	default:
 		return expression.ConditionBuilder{}, fmt.Errorf("unsupported macro in condition: %q", callExpr.Function)
 	}
@@ -322,6 +334,34 @@ func (c *converter) conditionFromCallExpr(expr *exprpb.Expr) (expression.Conditi
 	default:
 		return expression.ConditionBuilder{}, fmt.Errorf("unsupported function in condition: %q", callExpr.Function)
 	}
+}
+
+func (c *converter) conditionFromStartsWith(callExpr *exprpb.Expr_Call) (expression.ConditionBuilder, error) {
+	if err := c.expectArgCount(callExpr, 2); err != nil {
+		return expression.ConditionBuilder{}, fmt.Errorf("startsWith function: %w", err)
+	}
+
+	nameOperand, err := c.operandFromExpr(callExpr.Args[0])
+	if err != nil {
+		return expression.ConditionBuilder{}, fmt.Errorf("startsWith first arg: %w", err)
+	}
+
+	nameBuilder, ok := nameOperand.(expression.NameBuilder)
+	if !ok {
+		return expression.ConditionBuilder{}, errors.New("startsWith first argument must be an attribute name")
+	}
+
+	value, err := c.getValueFromExpr(callExpr.Args[1])
+	if err != nil {
+		return expression.ConditionBuilder{}, fmt.Errorf("startsWith second arg: %w", err)
+	}
+
+	strValue, ok := value.(string)
+	if !ok {
+		return expression.ConditionBuilder{}, errors.New("startsWith second arg must be a string")
+	}
+
+	return expression.BeginsWith(nameBuilder, strValue), nil
 }
 
 func (c *converter) conditionFromLogicalAnd(callExpr *exprpb.Expr_Call) (expression.ConditionBuilder, error) {

@@ -404,6 +404,48 @@ func TestCondition(t *testing.T) {
 			},
 		},
 		{
+			name: "starts with cel function",
+			src:  `status.startsWith("open")`,
+			check: func(t *testing.T, expr expression.Expression, err error) {
+				must.NoError(t, err)
+				must.NotNil(t, expr.Condition())
+				must.Eq(t, *expr.Condition(), "begins_with (#0, :0)")
+				must.Eq(t, expr.Names(), map[string]string{"#0": "status"})
+				must.MapContainsKey(t, expr.Values(), ":0")
+				value, ok := expr.Values()[":0"].(*dbtypes.AttributeValueMemberS)
+				must.True(t, ok)
+				must.Eq(t, value.Value, "open")
+			},
+		},
+		{
+			name: "contains function string",
+			src:  `contains(status, "open")`,
+			check: func(t *testing.T, expr expression.Expression, err error) {
+				must.NoError(t, err)
+				must.NotNil(t, expr.Condition())
+				must.Eq(t, *expr.Condition(), "contains (#0, :0)")
+				must.Eq(t, expr.Names(), map[string]string{"#0": "status"})
+				must.MapContainsKey(t, expr.Values(), ":0")
+				value, ok := expr.Values()[":0"].(*dbtypes.AttributeValueMemberS)
+				must.True(t, ok)
+				must.Eq(t, value.Value, "open")
+			},
+		},
+		{
+			name: "contains macro string",
+			src:  `status.contains("open")`,
+			check: func(t *testing.T, expr expression.Expression, err error) {
+				must.NoError(t, err)
+				must.NotNil(t, expr.Condition())
+				must.Eq(t, *expr.Condition(), "contains (#0, :0)")
+				must.Eq(t, expr.Names(), map[string]string{"#0": "status"})
+				must.MapContainsKey(t, expr.Values(), ":0")
+				value, ok := expr.Values()[":0"].(*dbtypes.AttributeValueMemberS)
+				must.True(t, ok)
+				must.Eq(t, value.Value, "open")
+			},
+		},
+		{
 			name: "ident equals string",
 			src:  `severity == "critical"`,
 			check: func(t *testing.T, expr expression.Expression, err error) {
