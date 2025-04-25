@@ -20,6 +20,7 @@ import (
 	"github.com/picatz/dynabuf/expr"
 	"github.com/shoenig/test/must"
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/log"
 	"github.com/testcontainers/testcontainers-go/modules/localstack"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -912,7 +913,7 @@ func Test_WithLocalStack(t *testing.T) {
 		testcontainers.WithConfigModifier(func(config *container.Config) {
 			config.ExposedPorts = nat.PortSet{"4566/tcp": struct{}{}}
 		}),
-		testcontainers.WithLogger(testcontainers.TestLogger(t)),
+		testcontainers.WithLogger(log.TestLogger(t)),
 	)
 	must.NoError(t, err, must.Sprint("failed to run localstack container"))
 
