@@ -6,9 +6,9 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.36.3
 	github.com/aws/aws-sdk-go-v2/config v1.29.14
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.67
-	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.18.13
-	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.7.80
-	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.43.0
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.19.0
+	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.7.82
+	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.43.1
 	github.com/docker/docker v28.1.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/google/cel-go v0.25.0
