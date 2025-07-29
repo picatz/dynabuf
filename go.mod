@@ -9,7 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue v1.19.3
 	github.com/aws/aws-sdk-go-v2/feature/dynamodb/expression v1.7.85
 	github.com/aws/aws-sdk-go-v2/service/dynamodb v1.43.4
-	github.com/docker/docker v28.3.0+incompatible
+	github.com/docker/docker v28.3.3+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/google/cel-go v0.25.0
 	github.com/shoenig/test v1.12.1
